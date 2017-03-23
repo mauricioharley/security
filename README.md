@@ -1,8 +1,6 @@
 # Security
 Codes to use when dealing with security.
 
-Maurício Harley
-
-https://linkedin.com/in/mauricioharley/
-
+Maurício Harley<BR>
+https://linkedin.com/in/mauricioharley/<BR>
 https://twitter.com/mauricioharley/
