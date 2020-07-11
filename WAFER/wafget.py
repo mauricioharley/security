@@ -60,7 +60,7 @@ def getWaf(arguments):
         print("Considering WAF global resources.\n")
         log.write(function.getFormattedDateTime() + "Global WAF\n")
         client = boto3.client('waf')
-    
+
     if len(webAclId) == 0:
         try:
             response = client.list_web_acls()
@@ -105,7 +105,7 @@ def getWaf(arguments):
                 log.write(function.getFormattedDateTime() + "Unable to find the provided global Web ACL " + webAclId + ".\n")
             function.abortMission(log, template, "")
         webAclName = response['WebACL']['Name']
-    
+
     log.write(function.getFormattedDateTime() + "Web ACL (ID): " + webAclName + " (" + webAclId + ")\n")
     print("Grabbing resources for Web ACL {} (ID: {})...".format(webAclName, webAclId))
 
@@ -124,14 +124,14 @@ def getWaf(arguments):
     else:
         template.write('  region = "us-east-1"\n')
     template.write('}\n\n')
-    
+
     # Getting all conditions.
-    conditionsResult = crawlConditions(client, log, template, suffix) 
+    conditionsResult = crawlConditions(client, log, template, suffix)
     template.write(conditionsResult[1])
     template.write("\n\n")
 
     rules = {}
-    
+
     for i in range(len(response1['WebACL']['Rules'])):
         finalString = ""
         ruleId = response1['WebACL']['Rules'][i]['RuleId']
@@ -159,9 +159,9 @@ def getWaf(arguments):
                     index = 0
                     for key, value in rules.items():
                         if rules[key][:5] == "rule_":
-                            index += 1 
+                            index += 1
                     rules[idTemp] = "rule_" + str(index)
-                    nameTemp = rTemp['Rule']['Name']        
+                    nameTemp = rTemp['Rule']['Name']
                     print("                 Rule Name: {} / Rule ID: {}".format(nameTemp, idTemp))
                     log.write(function.getFormattedDateTime() + "            Rule Name: " + nameTemp + " / Rule ID: " + ruleId + "\n")
                     finalString += "resource \"aws_waf" + suffix + "rule\" \"rule_" + str(index) +"\" {\n"
@@ -206,7 +206,7 @@ def getWaf(arguments):
                 index = 0
                 for key, value in rules.items():
                     if rules[key][:5] == "rule_":
-                        index += 1 
+                        index += 1
                 rules[idTemp] = "rule_" + str(index)
                 finalString += "resource \"aws_waf" + suffix + "rate_based_rule\" \"rule_" + str(index) +"\" {\n"
                 finalString += "  name        = \"" + rTemp['Rule']['Name'] + "\"\n"
@@ -239,7 +239,7 @@ def getWaf(arguments):
                 index = 0
                 for key, value in rules.items():
                     if rules[key][:5] == "rule_":
-                        index += 1 
+                        index += 1
                 rules[idTemp] = "rule_" + str(index)
                 finalString += "resource \"aws_waf" + suffix + "rule\" \"rule_" + str(index) +"\" {\n"
                 finalString += "  name        = \"" + rTemp['Rule']['Name'] + "\"\n"
@@ -258,9 +258,9 @@ def getWaf(arguments):
                 template.write(finalString)
 
     # Getting all associated resources for the Web ACL.
-    resourcesResult = getAssociatedResources(client, webAclId, region, log, template, isRegional) 
+    resourcesResult = getAssociatedResources(client, webAclId, region, log, template, isRegional)
     template.write(resourcesResult[1])
-    
+
     finalString = ""
     finalString += "resource \"aws_waf" + suffix + "web_acl\" \"web_acl\" {\n"
     finalString += '  name        = "'+ webAclName + '"\n'
@@ -288,7 +288,7 @@ def getWaf(arguments):
             finalString += "    rule_id  = \"${aws_waf" + suffix + "rate_based_rule." + rules[response1['WebACL']['Rules'][i]['RuleId']] + ".id}\"\n\n"
             finalString += "    action {\n"
             finalString += "      type = \"" + response1['WebACL']['Rules'][i]['Action']['Type'] + "\"\n"
-        finalString += "    }\n"    
+        finalString += "    }\n"
         finalString += "  }\n\n"
     finalString += "}\n\n"
 
@@ -311,7 +311,7 @@ def getWaf(arguments):
     finalString += "  description = \"Please refer to this Web ACL\"\n"
     finalString += "  value       = \"" + webAclName + "\"\n"
     finalString += "}\n\n"
-    
+
     for z in range(len(resourcesResult[0])):
         finalString += "output \"" + resourcesResult[0][z][0] + "\" {\n"
         finalString += "  description = \"" + resourcesResult[0][z][1] + "\"\n"
@@ -338,12 +338,12 @@ def getWaf(arguments):
         zf.write(listLogTemplate[0], compress_type = compression)
     except:
         print("Unable to add {} to the zip file!".format(listLogTemplate[0]))
-    
+
     try:
         zf.write(listLogTemplate[1], compress_type = compression)
     except:
         print("Unable to add {} to the zip file!".format(listLogTemplate[1]))
-    
+
     zf.close()
     print("\nIf this operation is related to a support case, upload the file {} to the case.".format(package))
 
@@ -400,7 +400,7 @@ def crawlConditions(botoClient, log, template, suffix):
         namePrefix = "regex_pattern_set_" + str(k)
         returnString += "resource \"aws_waf" + suffix + "regex_pattern_set\" \"" + namePrefix + "\" {\n"
         returnString += "  name                  = \"" + condition['RegexPatternSet']['Name'] + "\"\n"
-        returnString += "  regex_pattern_strings = [ " 
+        returnString += "  regex_pattern_strings = [ "
         for l in range(len(condition['RegexPatternSet']['RegexPatternStrings'])):
             # The following loop is to insert another "\" for all Regex pattern sets that have "\", as Terraform may not originally understand them.
             cadTemp = ""
@@ -416,7 +416,7 @@ def crawlConditions(botoClient, log, template, suffix):
         returnString += " ]\n"
         conditionsDict[test['RegexPatternSets'][k]['RegexPatternSetId']] = namePrefix
         returnString += "}\n\n"
-    
+
     # Getting the Regex Match Conditions
     try:
         test = botoClient.list_regex_match_sets()
@@ -446,7 +446,7 @@ def crawlConditions(botoClient, log, template, suffix):
                 returnString += "\n"
         conditionsDict[test['RegexMatchSets'][k]['RegexMatchSetId']] = namePrefix
         returnString += "}\n\n"
-    
+
     # Getting the SQL Injection Conditions
     try:
         test = botoClient.list_sql_injection_match_sets()
@@ -477,8 +477,8 @@ def crawlConditions(botoClient, log, template, suffix):
             else:
                 returnString += "\n"
         conditionsDict[test['SqlInjectionMatchSets'][k]['SqlInjectionMatchSetId']] = namePrefix
-        returnString += "}"
-    
+        returnString += "}\n"
+
     returnString += "\n\n"
     # Getting the Size Constraint Set Conditions
     try:
@@ -509,7 +509,7 @@ def crawlConditions(botoClient, log, template, suffix):
             else:
                 returnString += "\n"
         conditionsDict[test['SizeConstraintSets'][k]['SizeConstraintSetId']] = namePrefix
-        returnString += "}"
+        returnString += "}\n"
 
     returnString += "\n\n"
     # Getting the IP Set Conditions
@@ -538,8 +538,8 @@ def crawlConditions(botoClient, log, template, suffix):
             else:
                 returnString += "\n"
         conditionsDict[test['IPSets'][k]['IPSetId']] = namePrefix
-        returnString += "}\n\n"    
-    
+        returnString += "}\n\n"
+
     # Getting the Geo Conditions
     try:
         test = botoClient.list_geo_match_sets()
@@ -595,8 +595,8 @@ def crawlConditions(botoClient, log, template, suffix):
             else:
                 returnString += "\n"
         conditionsDict[test['XssMatchSets'][k]['XssMatchSetId']] = namePrefix
-        returnString += "}"
-    
+        returnString += "}\n"
+
     return([conditionsDict, returnString])
 
 def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
@@ -604,11 +604,11 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
     Looks into the customer's WebACL and looks for associated resources.
     Returns a list of resources' names in case any is found.
     '''
-    
+
     resourceString = ""
     resourcesList  = []
-    
-    # Checking if the Web ACL is associated with any resource. If the resulting array las a length greater than zero, 
+
+    # Checking if the Web ACL is associated with any resource. If the resulting array las a length greater than zero,
     # it means there is at least one resource of that type associated with the Web ACL.
     # Looking for ALBs first. If at least one ALB is associated, we need to create all resources to support it:
     # VPC, Subnet, Route Table, Internet Gateway, Target Group and Security Group.
@@ -629,7 +629,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
 
             resourceString += "resource \"aws_subnet\" \"waferSubnet1\" {\n"
             resourceString += "  vpc_id            = \"${aws_vpc.waferVPC.id}\"\n"
-            resourceString += "  availability_zone = \"" + region + "a\"\n" 
+            resourceString += "  availability_zone = \"" + region + "a\"\n"
             resourceString += "  cidr_block        = \"10.10.1.0/24\"\n\n"
             resourceString += "  tags = {\n"
             resourceString += "    Name = \"WAFER\"\n"
@@ -638,7 +638,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
 
             resourceString += "resource \"aws_subnet\" \"waferSubnet2\" {\n"
             resourceString += "  vpc_id            = \"${aws_vpc.waferVPC.id}\"\n"
-            resourceString += "  availability_zone = \"" + region + "b\"\n" 
+            resourceString += "  availability_zone = \"" + region + "b\"\n"
             resourceString += "  cidr_block        = \"10.10.2.0/24\"\n\n"
             resourceString += "  tags = {\n"
             resourceString += "    Name = \"WAFER\"\n"
@@ -672,7 +672,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "  subnet_id      = \"${aws_subnet.waferSubnet2.id}\"\n"
             resourceString += "  route_table_id = \"${aws_route_table.waferRT.id}\"\n"
             resourceString += "}\n\n"
-            
+
             resourceString += "resource \"aws_security_group\" \"waferALBSG\" {\n"
             resourceString += "  name        = \"waferALBSG\"\n"
             resourceString += "  description = \"Allow HTTP inbound traffic\"\n"
@@ -693,7 +693,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "     Name = \"WAFER\"\n"
             resourceString += "  }\n"
             resourceString += "}\n\n"
-            
+
             resourceString += "resource \"aws_lb\" \"waferALB\" {\n"
             resourceString += "  name               = \"waferALB\"\n"
             resourceString += "  internal           = false\n"
@@ -722,7 +722,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "    target_group_arn = \"${aws_lb_target_group.waferALBTG.arn}\"\n"
             resourceString += "  }\n"
             resourceString += "}\n\n"
-            
+
             listTemp = []
             listTemp.append("ALB_DNS_Name")
             listTemp.append("ALB DNS Name")
@@ -774,7 +774,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "  integration_http_method = \"GET\"\n"
             resourceString += "  type                    = \"MOCK\"\n"
             resourceString += "}\n\n"
-            
+
             listTemp = []
             listTemp.append("API_Gateway_Invoke_URL")
             listTemp.append("API Gateway Invoke URL")
@@ -800,7 +800,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
 
             resourceString += "resource \"aws_subnet\" \"waferSubnet1\" {\n"
             resourceString += "  vpc_id            = \"${aws_vpc.waferVPC.id}\"\n"
-            resourceString += "  availability_zone = \"us-east-1a\"\n" 
+            resourceString += "  availability_zone = \"us-east-1a\"\n"
             resourceString += "  cidr_block        = \"10.10.1.0/24\"\n\n"
             resourceString += "  tags = {\n"
             resourceString += "    Name = \"WAFER\"\n"
@@ -809,7 +809,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
 
             resourceString += "resource \"aws_subnet\" \"waferSubnet2\" {\n"
             resourceString += "  vpc_id            = \"${aws_vpc.waferVPC.id}\"\n"
-            resourceString += "  availability_zone = \"us-east-1b\"\n" 
+            resourceString += "  availability_zone = \"us-east-1b\"\n"
             resourceString += "  cidr_block        = \"10.10.2.0/24\"\n\n"
             resourceString += "  tags = {\n"
             resourceString += "    Name = \"WAFER\"\n"
@@ -843,7 +843,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "  subnet_id      = \"${aws_subnet.waferSubnet2.id}\"\n"
             resourceString += "  route_table_id = \"${aws_route_table.waferRT.id}\"\n"
             resourceString += "}\n\n"
-            
+
             resourceString += "resource \"aws_security_group\" \"waferALBSG\" {\n"
             resourceString += "  name        = \"waferALBSG\"\n"
             resourceString += "  description = \"Allow HTTP inbound traffic\"\n"
@@ -864,7 +864,7 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "     Name = \"WAFER\"\n"
             resourceString += "  }\n"
             resourceString += "}\n\n"
-            
+
             resourceString += "resource \"aws_lb\" \"waferALB\" {\n"
             resourceString += "  name               = \"waferALB\"\n"
             resourceString += "  internal           = false\n"
@@ -893,13 +893,13 @@ def getAssociatedResources(wafClient, AclId, region, log, template, isRegional):
             resourceString += "    target_group_arn = \"${aws_lb_target_group.waferALBTG.arn}\"\n"
             resourceString += "  }\n"
             resourceString += "}\n\n"
-            
+
             listTemp = []
             listTemp.append("ALB_DNS_Name")
             listTemp.append("ALB DNS Name")
             listTemp.append("aws_lb.waferALB.dns_name")
             resourcesList.append(listTemp)
-            
+
             # Time to create the CloudFront distribution.
             resourceString += "resource \"aws_cloudfront_distribution\" \"waferCFN\" {\n"
             resourceString += "  comment    = \"WAFER CloudFront Distribution\"\n"
